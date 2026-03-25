@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-production-caab.up.railway.app';
 
 // For demo: we'll use the first user. In production, this would come from auth.
 let currentUserId: string | null = null;

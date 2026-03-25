@@ -1,4 +1,4 @@
-const SSE_URL = 'http://localhost:8000/events';
+const SSE_URL = `${import.meta.env.VITE_API_URL || 'https://backend-production-caab.up.railway.app'}/events`;
 
 type EventHandler = (data: any) => void;
 
