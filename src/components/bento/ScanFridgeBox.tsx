@@ -1,6 +1,32 @@
 import ramenImg from '../../assets/ramen.png';
-import { mockFridgeChanges } from '../../data/mock';
 import { useData } from '../../context/DataContext';
+
+const FOOD_EMOJI: Record<string, string> = {
+  egg: '🥚', eggs: '🥚', milk: '🥛', cheese: '🧀', butter: '🧈',
+  bread: '🍞', rice: '🍚', pasta: '🍝', chicken: '🍗', beef: '🥩',
+  meat: '🥩', fish: '🐟', salmon: '🐟', shrimp: '🦐', prawn: '🦐',
+  tomato: '🍅', tomatoes: '🍅', potato: '🥔', potatoes: '🥔',
+  onion: '🧅', garlic: '🧄', lettuce: '🥬', carrot: '🥕',
+  broccoli: '🥦', corn: '🌽', pepper: '🌶️', cucumber: '🥒',
+  avocado: '🥑', banana: '🍌', apple: '🍎', orange: '🍊',
+  lemon: '🍋', watermelon: '🍉', grape: '🍇', grapes: '🍇',
+  strawberry: '🍓', peach: '🍑', pineapple: '🍍', coconut: '🥥',
+  mushroom: '🍄', soup: '🍲', stew: '🍲', oil: '🫒', olive: '🫒',
+  salt: '🧂', honey: '🍯', chocolate: '🍫', coffee: '☕', tea: '🍵',
+  water: '💧', juice: '🧃', wine: '🍷', beer: '🍺',
+  pizza: '🍕', burger: '🍔', sushi: '🍣', taco: '🌮',
+  cake: '🍰', cookie: '🍪', ice: '🧊', yogurt: '🥛',
+};
+
+function getFoodEmoji(name: string): string {
+  const lower = name.toLowerCase().trim();
+  if (FOOD_EMOJI[lower]) return FOOD_EMOJI[lower];
+  // Try partial match
+  for (const [key, emoji] of Object.entries(FOOD_EMOJI)) {
+    if (lower.includes(key) || key.includes(lower)) return emoji;
+  }
+  return '🍽️';
+}
 
 interface ScanFridgeBoxProps {
   onOpenPantry?: () => void;
@@ -9,13 +35,19 @@ interface ScanFridgeBoxProps {
 export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
   const { inventory, fridgeChanges, lastPhoto, connected } = useData();
 
-  // Use live fridge changes from SSE if available, otherwise fall back to mock
+  // Priority: 1) live SSE fridge changes, 2) current inventory as "+N" items, 3) nothing
   const hasLiveChanges = fridgeChanges.length > 0;
+  const hasInventory = inventory.length > 0;
+
+  // Build display list: if we have recent SSE changes show those,
+  // otherwise show the full inventory as detected items (all positive)
   const displayChanges = hasLiveChanges
     ? fridgeChanges.map((c) => ({ delta: c.delta, name: c.name }))
-    : mockFridgeChanges;
+    : hasInventory
+      ? inventory.map((item) => ({ delta: item.quantity, name: item.name }))
+      : [];
 
-  // Use last photo from backend if available, otherwise ramen placeholder
+  // Use last photo from backend if available
   const fridgeImageSrc = lastPhoto
     ? `data:image/jpeg;base64,${lastPhoto}`
     : ramenImg;
@@ -34,7 +66,7 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
       }}
     >
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-        {/* Left column -- fridge scan image */}
+        {/* Left column — fridge scan image */}
         <div
           style={{
             flex: '0 0 40%',
@@ -68,9 +100,6 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
-              fontSize: 12,
-              lineHeight: 1,
             }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -79,8 +108,8 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
             </svg>
           </div>
 
-          {/* Live inventory count badge */}
-          {inventory.length > 0 && (
+          {/* Live inventory count */}
+          {hasInventory && (
             <div
               style={{
                 position: 'absolute',
@@ -99,7 +128,6 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
             </div>
           )}
 
-          {/* Connected indicator */}
           {connected && (
             <div
               style={{
@@ -116,7 +144,7 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
           )}
         </div>
 
-        {/* Right column -- scan results scoreboard */}
+        {/* Right column — scan results */}
         <div
           style={{
             flex: 1,
@@ -138,8 +166,8 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
               gap: 6,
             }}
           >
-            SCAN RESULTS
-            {hasLiveChanges && (
+            {hasLiveChanges ? 'SCAN RESULTS' : hasInventory ? 'INVENTORY' : 'SCAN RESULTS'}
+            {(hasLiveChanges || hasInventory) && (
               <span
                 style={{
                   width: 6,
@@ -152,47 +180,50 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
             )}
           </span>
 
-          {/* Changes list */}
+          {/* Items list */}
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            {displayChanges.map((item, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '3px 0',
-                }}
-              >
-                <span
-                  className="font-body font-extrabold"
+            {displayChanges.length > 0 ? (
+              displayChanges.slice(0, 10).map((item, i) => (
+                <div
+                  key={i}
                   style={{
-                    fontSize: 13,
-                    color:
-                      item.delta > 0 ? 'var(--success)' : 'var(--danger)',
-                    minWidth: 28,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '3px 0',
                   }}
                 >
-                  {item.delta > 0 ? `+${item.delta}` : item.delta}
-                </span>
-                {/* SVG food icon instead of emoji */}
-                <span style={{ display: 'flex', alignItems: 'center' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--foreground-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-                    <line x1="6" y1="1" x2="6" y2="4" />
-                    <line x1="10" y1="1" x2="10" y2="4" />
-                    <line x1="14" y1="1" x2="14" y2="4" />
-                  </svg>
-                </span>
-                <span
-                  className="font-body font-normal"
-                  style={{ fontSize: 12, color: 'var(--foreground)' }}
-                >
-                  {item.name}
-                </span>
+                  <span
+                    className="font-body font-extrabold"
+                    style={{
+                      fontSize: 13,
+                      color: item.delta > 0 ? 'var(--success)' : 'var(--danger)',
+                      minWidth: 32,
+                    }}
+                  >
+                    {item.delta > 0 ? `+${item.delta}` : item.delta}
+                  </span>
+                  <span style={{ fontSize: 14, lineHeight: 1 }}>
+                    {getFoodEmoji(item.name)}
+                  </span>
+                  <span
+                    className="font-body font-normal"
+                    style={{ fontSize: 12, color: 'var(--foreground)' }}
+                  >
+                    {item.name}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="font-body" style={{ fontSize: 11, color: 'var(--foreground-muted)', padding: '8px 0' }}>
+                Send a fridge photo to @ChefBobbyBot to scan your inventory
               </div>
-            ))}
+            )}
+            {displayChanges.length > 10 && (
+              <span className="font-body" style={{ fontSize: 10, color: 'var(--foreground-muted)' }}>
+                +{displayChanges.length - 10} more
+              </span>
+            )}
           </div>
 
           {/* See more link */}
@@ -204,9 +235,10 @@ export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
               fontSize: 11,
               color: 'var(--accent)',
               cursor: 'pointer',
+              flexShrink: 0,
             }}
           >
-            See more &rarr;
+            See more →
           </span>
         </div>
       </div>

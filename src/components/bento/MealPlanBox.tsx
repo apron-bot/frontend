@@ -23,24 +23,46 @@ export default function MealPlanBox() {
   let displayPlan: MealPlanDay[] = mockMealPlan;
   let hasLiveData = false;
 
-  if (mealPlan && mealPlan.days && Array.isArray(mealPlan.days)) {
+  const DAYS_OF_WEEK = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+  // Backend MealPlan has { meals: PlannedMeal[] } where PlannedMeal has { day: "2026-03-25", recipe: { name, ... }, cooked, skipped }
+  if (mealPlan && mealPlan.meals && Array.isArray(mealPlan.meals)) {
+    // Group meals by day, pick one per day (prefer dinner)
+    const byDay = new Map<string, any>();
+    for (const meal of mealPlan.meals) {
+      const dayStr = meal.day; // "2026-03-25"
+      if (!byDay.has(dayStr) || meal.meal_type === 'dinner') {
+        byDay.set(dayStr, meal);
+      }
+    }
+    const today = new Date().toISOString().split('T')[0];
+    const sorted = [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b));
+    displayPlan = sorted.map(([dayStr, meal]) => {
+      const d = new Date(dayStr + 'T00:00:00');
+      const dayShort = DAYS_OF_WEEK[d.getDay() === 0 ? 6 : d.getDay() - 1] || 'DAY';
+      return {
+        day: dayStr,
+        dayShort,
+        recipe: meal.recipe ? { title: meal.recipe.name || meal.recipe.title || '', emoji: meal.recipe.emoji || '' } : null,
+        cooked: meal.cooked || false,
+        isToday: dayStr === today,
+      };
+    });
+    hasLiveData = true;
+  } else if (mealPlan && mealPlan.days && Array.isArray(mealPlan.days)) {
     displayPlan = mealPlan.days.map((day: any) => ({
       day: day.day || day.name || '',
       dayShort: (day.day || day.name || '').substring(0, 3).toUpperCase(),
-      recipe: day.recipe
-        ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' }
-        : null,
+      recipe: day.recipe ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' } : null,
       cooked: day.cooked || false,
       isToday: day.isToday || false,
     }));
     hasLiveData = true;
-  } else if (mealPlan && Array.isArray(mealPlan)) {
+  } else if (Array.isArray(mealPlan)) {
     displayPlan = mealPlan.map((day: any) => ({
       day: day.day || day.name || '',
       dayShort: (day.day || day.name || '').substring(0, 3).toUpperCase(),
-      recipe: day.recipe
-        ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' }
-        : null,
+      recipe: day.recipe ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' } : null,
       cooked: day.cooked || false,
       isToday: day.isToday || false,
     }));

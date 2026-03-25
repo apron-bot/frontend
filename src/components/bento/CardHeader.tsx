@@ -2,8 +2,10 @@ import Bobby from './Bobby';
 import { useTheme } from '../../context/ThemeContext';
 import { useGreeting } from '../../hooks/useGreeting';
 
-const NAV_TABS = ['Dashboard', 'Pantry', 'Recipes', 'Orders'] as const;
-type NavTab = (typeof NAV_TABS)[number];
+const DAY_TABS = ['Dashboard', 'Pantry', 'Recipes', 'Orders'] as const;
+const NIGHT_TABS = ['Dashboard', 'Orders'] as const;
+
+export type NavTab = 'Dashboard' | 'Pantry' | 'Recipes' | 'Orders';
 
 interface CardHeaderProps {
   activePage: NavTab;
@@ -15,6 +17,7 @@ export default function CardHeader({ activePage, onPageChange }: CardHeaderProps
   const greeting = useGreeting();
 
   const greetingText = isDayMode ? greeting.text : greeting.nightText;
+  const tabs = isDayMode ? DAY_TABS : NIGHT_TABS;
 
   return (
     <div className="flex items-center justify-between w-full">
@@ -39,7 +42,7 @@ export default function CardHeader({ activePage, onPageChange }: CardHeaderProps
 
       {/* Right side: nav tabs + mode toggle */}
       <div className="flex items-center gap-2">
-        {NAV_TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => onPageChange(tab)}
@@ -57,7 +60,11 @@ export default function CardHeader({ activePage, onPageChange }: CardHeaderProps
         ))}
 
         <button
-          onClick={toggleMode}
+          onClick={() => {
+            toggleMode();
+            // Reset to Dashboard when switching modes
+            onPageChange('Dashboard');
+          }}
           className="flex items-center justify-center rounded-full cursor-pointer"
           style={{
             width: 34,

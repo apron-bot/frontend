@@ -79,10 +79,17 @@ export async function getOrders(userId: string) {
   return fetchApi(`/dashboard/orders/${userId}`);
 }
 
-export async function generateRecipes(userId: string, query?: string) {
+export interface RecipeFilters {
+  query?: string;
+  servings?: number;
+  difficulty?: string;
+  flavor_profile?: Record<string, number>;
+}
+
+export async function generateRecipes(userId: string, filters?: RecipeFilters) {
   return fetchApi(`/dashboard/recipes/${userId}/generate`, {
     method: 'POST',
-    body: JSON.stringify({ query: query || null }),
+    body: JSON.stringify(filters || {}),
   });
 }
 
