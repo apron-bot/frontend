@@ -1,0 +1,300 @@
+import type { Ingredient, Recipe, Restaurant, Order, ShoppingItem, MealPlanDay, FridgeChange } from '../types';
+
+export const mockIngredients: Ingredient[] = [
+  // Dairy
+  { id: '1', name: 'Eggs', emoji: '🥚', category: 'Dairy', quantity: '8 left', isLowStock: false },
+  { id: '2', name: 'Milk', emoji: '🥛', category: 'Dairy', quantity: 'Low!', isLowStock: true },
+  { id: '3', name: 'Cheese', emoji: '🧀', category: 'Dairy', quantity: '200g', isLowStock: false },
+  { id: '4', name: 'Butter', emoji: '🧈', category: 'Dairy', quantity: '150g', isLowStock: false },
+  // Produce
+  { id: '5', name: 'Tomato', emoji: '🍅', category: 'Produce', quantity: '4 left', isLowStock: false },
+  { id: '6', name: 'Potato', emoji: '🥔', category: 'Produce', quantity: '6 left', isLowStock: false },
+  { id: '7', name: 'Onion', emoji: '🧅', category: 'Produce', quantity: '3 left', isLowStock: false },
+  { id: '8', name: 'Garlic', emoji: '🧄', category: 'Produce', quantity: '5 cloves', isLowStock: false },
+  { id: '9', name: 'Lettuce', emoji: '🥬', category: 'Produce', quantity: '1 head', isLowStock: false, addedRecently: true },
+  // Meat
+  { id: '10', name: 'Chicken', emoji: '🍗', category: 'Meat', quantity: '500g', isLowStock: false },
+  { id: '11', name: 'Beef', emoji: '🥩', category: 'Meat', quantity: 'Low!', isLowStock: true },
+  // Grains
+  { id: '12', name: 'Rice', emoji: '🍚', category: 'Grains', quantity: '1.2kg', isLowStock: false },
+  { id: '13', name: 'Bread', emoji: '🍞', category: 'Grains', quantity: 'Low!', isLowStock: true },
+  { id: '14', name: 'Pasta', emoji: '🍝', category: 'Grains', quantity: '800g', isLowStock: false },
+  // Other
+  { id: '15', name: 'Olive oil', emoji: '🫒', category: 'Other', quantity: '500ml', isLowStock: false },
+  { id: '16', name: 'Soy sauce', emoji: '🥫', category: 'Other', quantity: '200ml', isLowStock: false },
+];
+
+export const mockRecipes: Recipe[] = [
+  {
+    id: '1',
+    title: 'Tortilla Española',
+    emoji: '🍳',
+    mealType: 'dinner',
+    difficulty: 'easy',
+    timeMinutes: 30,
+    servings: 4,
+    tags: ['Vegetarian', 'Spanish', 'Classic'],
+    ingredients: [
+      { name: 'Eggs', amount: '6 large', inPantry: true },
+      { name: 'Potatoes', amount: '4 medium', inPantry: true },
+      { name: 'Onion', amount: '1 large', inPantry: true },
+      { name: 'Olive oil', amount: '100ml', inPantry: true },
+      { name: 'Salt', amount: 'to taste', inPantry: true },
+      { name: 'Pepper', amount: 'to taste', inPantry: true },
+    ],
+    steps: [
+      { instruction: 'Peel and thinly slice the potatoes and onion. Pat them dry with a paper towel.', emoji: '🥔' },
+      { instruction: 'Heat olive oil in a large non-stick pan over medium heat. Add potatoes and onion, cook gently for 15 minutes until soft.', timerMinutes: 15, emoji: '🫒' },
+      { instruction: 'Beat the eggs in a large bowl with salt and pepper. Add the cooked potatoes and onion to the egg mixture.', emoji: '🥚' },
+      { instruction: 'Pour the mixture into the pan. Cook on low heat for 8 minutes until the bottom is set.', timerMinutes: 8, emoji: '🍳' },
+      { instruction: 'Place a plate on top of the pan and flip the tortilla. Slide it back in and cook for 3 more minutes.', timerMinutes: 3, emoji: '🔄' },
+      { instruction: 'Slide onto a plate and let it rest for 2 minutes. Serve warm or at room temperature.', emoji: '✨' },
+    ],
+    saved: true,
+    placeholderColor: '#FFF0EB',
+    availabilityStatus: 'all',
+  },
+  {
+    id: '2',
+    title: 'Pasta Carbonara',
+    emoji: '🍝',
+    mealType: 'dinner',
+    difficulty: 'medium',
+    timeMinutes: 25,
+    servings: 2,
+    tags: ['Italian', 'Classic', 'Quick'],
+    ingredients: [
+      { name: 'Spaghetti', amount: '200g', inPantry: true },
+      { name: 'Eggs', amount: '3 large', inPantry: true },
+      { name: 'Pecorino', amount: '80g', inPantry: false },
+      { name: 'Guanciale', amount: '150g', inPantry: false },
+      { name: 'Black pepper', amount: 'generous', inPantry: true },
+    ],
+    steps: [
+      { instruction: 'Boil a large pot of salted water. Cook spaghetti until al dente.', timerMinutes: 10, emoji: '🍝' },
+      { instruction: 'Cut guanciale into small strips and cook in a dry pan until crispy.', timerMinutes: 5, emoji: '🥓' },
+      { instruction: 'Mix eggs, pecorino, and black pepper in a bowl.', emoji: '🥚' },
+      { instruction: 'Drain pasta, reserving some water. Toss with guanciale off heat, then add egg mixture. Stir quickly.', emoji: '✨' },
+    ],
+    saved: true,
+    placeholderColor: '#FFF8E1',
+    availabilityStatus: 'some',
+  },
+  {
+    id: '3',
+    title: 'Chicken Stir Fry',
+    emoji: '🥘',
+    mealType: 'lunch',
+    difficulty: 'easy',
+    timeMinutes: 20,
+    servings: 3,
+    tags: ['Asian', 'Quick', 'Healthy'],
+    ingredients: [
+      { name: 'Chicken breast', amount: '400g', inPantry: true },
+      { name: 'Rice', amount: '200g', inPantry: true },
+      { name: 'Soy sauce', amount: '3 tbsp', inPantry: true },
+      { name: 'Garlic', amount: '3 cloves', inPantry: true },
+      { name: 'Vegetables', amount: 'mixed', inPantry: true },
+    ],
+    steps: [
+      { instruction: 'Cook rice according to package instructions.', timerMinutes: 15, emoji: '🍚' },
+      { instruction: 'Slice chicken into strips. Stir-fry in a hot wok with oil for 5 minutes.', timerMinutes: 5, emoji: '🍗' },
+      { instruction: 'Add garlic and vegetables. Cook for 3 more minutes.', timerMinutes: 3, emoji: '🥬' },
+      { instruction: 'Add soy sauce, toss everything together. Serve over rice.', emoji: '✨' },
+    ],
+    saved: true,
+    placeholderColor: '#E8F8ED',
+    availabilityStatus: 'all',
+  },
+  {
+    id: '4',
+    title: 'Gazpacho',
+    emoji: '🍅',
+    mealType: 'lunch',
+    difficulty: 'easy',
+    timeMinutes: 15,
+    servings: 4,
+    tags: ['Spanish', 'Cold', 'Vegan', 'Summer'],
+    ingredients: [
+      { name: 'Tomatoes', amount: '6 ripe', inPantry: true },
+      { name: 'Cucumber', amount: '1', inPantry: false },
+      { name: 'Red pepper', amount: '1', inPantry: false },
+      { name: 'Garlic', amount: '1 clove', inPantry: true },
+      { name: 'Olive oil', amount: '50ml', inPantry: true },
+      { name: 'Vinegar', amount: '2 tbsp', inPantry: false },
+    ],
+    steps: [
+      { instruction: 'Roughly chop all vegetables.', emoji: '🔪' },
+      { instruction: 'Blend everything until smooth. Season with salt and vinegar.', emoji: '🍅' },
+      { instruction: 'Chill in fridge for at least 1 hour before serving.', timerMinutes: 60, emoji: '❄️' },
+    ],
+    saved: false,
+    placeholderColor: '#FDECEB',
+    availabilityStatus: 'few',
+  },
+  {
+    id: '5',
+    title: 'Paella Mixta',
+    emoji: '🥘',
+    mealType: 'dinner',
+    difficulty: 'hard',
+    timeMinutes: 45,
+    servings: 6,
+    tags: ['Spanish', 'Seafood', 'Rice'],
+    ingredients: [
+      { name: 'Rice', amount: '400g', inPantry: true },
+      { name: 'Chicken', amount: '300g', inPantry: true },
+      { name: 'Prawns', amount: '200g', inPantry: false },
+      { name: 'Mussels', amount: '200g', inPantry: false },
+      { name: 'Saffron', amount: '1 pinch', inPantry: false },
+      { name: 'Olive oil', amount: '60ml', inPantry: true },
+    ],
+    steps: [
+      { instruction: 'Heat olive oil in a paella pan. Brown chicken pieces.', timerMinutes: 8, emoji: '🍗' },
+      { instruction: 'Add rice and saffron-infused stock. Spread evenly.', emoji: '🍚' },
+      { instruction: 'Cook without stirring for 15 minutes. Add seafood on top.', timerMinutes: 15, emoji: '🦐' },
+      { instruction: 'Cover and cook until rice is done and seafood is cooked through.', timerMinutes: 10, emoji: '✨' },
+    ],
+    saved: true,
+    placeholderColor: '#FFF8E1',
+    availabilityStatus: 'few',
+  },
+  {
+    id: '6',
+    title: 'Avocado Toast',
+    emoji: '🥑',
+    mealType: 'breakfast',
+    difficulty: 'easy',
+    timeMinutes: 10,
+    servings: 2,
+    tags: ['Quick', 'Vegetarian', 'Healthy'],
+    ingredients: [
+      { name: 'Bread', amount: '2 slices', inPantry: true },
+      { name: 'Avocado', amount: '1 ripe', inPantry: false },
+      { name: 'Eggs', amount: '2', inPantry: true },
+      { name: 'Chili flakes', amount: 'to taste', inPantry: true },
+    ],
+    steps: [
+      { instruction: 'Toast the bread until golden and crispy.', timerMinutes: 3, emoji: '🍞' },
+      { instruction: 'Mash avocado with salt, pepper, and a squeeze of lime.', emoji: '🥑' },
+      { instruction: 'Spread avocado on toast, top with a fried egg and chili flakes.', emoji: '🍳' },
+    ],
+    saved: false,
+    placeholderColor: '#E8F8ED',
+    availabilityStatus: 'some',
+  },
+];
+
+export const mockRestaurants: Restaurant[] = [
+  { id: 'r1', name: "Domino's", emoji: '🍕', deliveryTime: '20-30 min', priceRange: '€€', cuisine: ['Pizza', 'Italian'], placeholderColor: '#FFF0EB' },
+  { id: 'r2', name: 'Sushi Palace', emoji: '🍣', deliveryTime: '25-35 min', priceRange: '€€€', cuisine: ['Sushi', 'Japanese'], placeholderColor: '#E3F1FB' },
+  { id: 'r3', name: 'Taco Bell', emoji: '🌮', deliveryTime: '15-25 min', priceRange: '€', cuisine: ['Mexican', 'Fast food'], placeholderColor: '#FFF8E1' },
+  { id: 'r4', name: 'Goiko', emoji: '🍔', deliveryTime: '20-30 min', priceRange: '€€', cuisine: ['Burgers', 'American'], placeholderColor: '#FFF0EB' },
+];
+
+export const mockOrders: Order[] = [
+  {
+    id: 'o1',
+    storeName: 'Mercadona — Weekly groceries',
+    emoji: '🛒',
+    description: 'Mercadona — Weekly groceries',
+    detail: '12 items · €34.20 · Today 10:30',
+    status: 'delivering',
+    iconBg: 'var(--success-bg)',
+    progress: 65,
+    items: [
+      { name: 'Milk', quantity: 2, price: 1.20 },
+      { name: 'Bread', quantity: 1, price: 0.80 },
+      { name: 'Eggs', quantity: 1, price: 2.50 },
+      { name: 'Chicken', quantity: 1, price: 5.90 },
+    ],
+  },
+  {
+    id: 'o2',
+    storeName: 'Glovo — Sushi Palace',
+    emoji: '🛵',
+    description: 'Glovo — Sushi Palace',
+    detail: '2 items · €18.50 · Yesterday',
+    status: 'delivered',
+    iconBg: 'var(--info-bg)',
+    items: [
+      { name: 'Combo for 2', quantity: 1, price: 15.00 },
+      { name: 'Miso soup', quantity: 1, price: 3.50 },
+    ],
+  },
+  {
+    id: 'o3',
+    storeName: 'Carrefour — Essentials',
+    emoji: '🛒',
+    description: 'Carrefour — Essentials',
+    detail: '6 items · €22.80 · Mar 21',
+    status: 'delivered',
+    iconBg: 'var(--success-bg)',
+    items: [
+      { name: 'Olive oil', quantity: 1, price: 6.50 },
+      { name: 'Rice', quantity: 2, price: 3.60 },
+      { name: 'Pasta', quantity: 3, price: 4.20 },
+    ],
+  },
+];
+
+export const mockShoppingList: ShoppingItem[] = [
+  { id: 's1', name: 'Milk — 1L', quantity: '1L', store: 'Mercadona', price: 1.20, checked: false },
+  { id: 's2', name: 'Bread — Whole wheat', quantity: '1 loaf', store: 'Mercadona', price: 0.95, checked: false },
+  { id: 's3', name: 'Chicken breast — 500g', quantity: '500g', store: 'Mercadona', price: 4.50, checked: false },
+  { id: 's4', name: 'Tomatoes — 1kg', quantity: '1kg', store: 'Mercadona', price: 2.30, checked: false },
+  { id: 's5', name: 'Pecorino cheese', quantity: '200g', store: 'Mercadona', price: 3.80, checked: false },
+  { id: 's6', name: 'Avocado', quantity: '2', store: 'Mercadona', price: 2.40, checked: false },
+  { id: 's7', name: 'Cucumber', quantity: '2', store: 'Carrefour', price: 1.10, checked: false },
+  { id: 's8', name: 'Red pepper', quantity: '2', store: 'Carrefour', price: 1.80, checked: false },
+  { id: 's9', name: 'Prawns — frozen', quantity: '400g', store: 'Carrefour', price: 6.90, checked: false },
+  { id: 's10', name: 'Saffron', quantity: '1 pack', store: 'DIA', price: 2.65, checked: false },
+];
+
+export const mockMealPlan: MealPlanDay[] = [
+  { day: 'Monday', dayShort: 'MON', recipe: { title: 'Avocado Toast', emoji: '🥑' }, cooked: true, isToday: false },
+  { day: 'Tuesday', dayShort: 'TUE', recipe: { title: 'Stir Fry', emoji: '🥘' }, cooked: true, isToday: false },
+  { day: 'Wednesday', dayShort: 'WED', recipe: { title: 'Gazpacho', emoji: '🍅' }, cooked: false, isToday: true },
+  { day: 'Thursday', dayShort: 'THU', recipe: { title: 'Carbonara', emoji: '🍝' }, cooked: false, isToday: false },
+  { day: 'Friday', dayShort: 'FRI', recipe: { title: 'Tortilla', emoji: '🍳' }, cooked: false, isToday: false },
+  { day: 'Saturday', dayShort: 'SAT', recipe: { title: 'Paella', emoji: '🥘' }, cooked: false, isToday: false },
+  { day: 'Sunday', dayShort: 'SUN', recipe: null, cooked: false, isToday: false },
+];
+
+export const mockSpending = {
+  today: { amount: 8.40, comparison: '↓ €3 vs yesterday', positive: true },
+  week: { amount: 52.70, comparison: '↑ €12 vs last week', positive: false },
+  month: { amount: 187.30, comparison: '↓ €23 vs last month', positive: true },
+  budget: 250,
+  saved: 47.30,
+  breakdown: [
+    { store: 'Mercadona', amount: 74.90, color: 'var(--accent)', percent: 40 },
+    { store: 'Carrefour', amount: 46.80, color: '#5BA4D9', percent: 25 },
+    { store: 'DIA', amount: 28.10, color: 'var(--warning)', percent: 15 },
+    { store: 'Glovo', amount: 22.50, color: 'var(--purple)', percent: 12 },
+    { store: 'Uber Eats', amount: 15.00, color: 'var(--success)', percent: 8 },
+  ],
+};
+
+export const mockFridgeChanges: FridgeChange[] = [
+  { delta: 12, emoji: '🥚', name: 'Eggs' },
+  { delta: -1, emoji: '🍉', name: 'Watermelon' },
+  { delta: 3, emoji: '🥛', name: 'Milk' },
+  { delta: 1, emoji: '🧀', name: 'Cheese' },
+  { delta: -2, emoji: '🍅', name: 'Tomato' },
+  { delta: 1, emoji: '🥬', name: 'Lettuce' },
+  { delta: 6, emoji: '🥔', name: 'Potato' },
+  { delta: -1, emoji: '🍗', name: 'Chicken' },
+];
+
+// Pantry snapshot for home page (8 items)
+export const pantrySnapshotItems = [
+  { emoji: '🥚', name: 'Eggs', quantity: '8 left', isLowStock: false },
+  { emoji: '🥛', name: 'Milk', quantity: 'Low!', isLowStock: true },
+  { emoji: '🍗', name: 'Chicken', quantity: '500g', isLowStock: false },
+  { emoji: '🍚', name: 'Rice', quantity: '1.2kg', isLowStock: false },
+  { emoji: '🍅', name: 'Tomato', quantity: '4 left', isLowStock: false },
+  { emoji: '🍞', name: 'Bread', quantity: 'Low!', isLowStock: true },
+  { emoji: '🥔', name: 'Potato', quantity: '6 left', isLowStock: false },
+  { emoji: '🧀', name: 'Cheese', quantity: '200g', isLowStock: false },
+];
