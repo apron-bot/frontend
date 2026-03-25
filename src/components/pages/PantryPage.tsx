@@ -82,7 +82,7 @@ export default function PantryPage() {
             )}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 8 }}>
             {items.map((item: any) => {
               const sc = sourceColor(item.source || '');
               const hasIcon = iconCache[item.name];
@@ -90,48 +90,52 @@ export default function PantryPage() {
                 <div
                   key={item.id}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: 12,
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                     background: 'var(--background-card)', borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border)',
+                    border: '1px solid var(--border)', overflow: 'hidden',
                   }}
                 >
                   <div style={{
-                    width: 40, height: 40, borderRadius: 10, flexShrink: 0, overflow: 'hidden',
+                    width: 36, height: 36, borderRadius: 9, flexShrink: 0, overflow: 'hidden',
                     background: hasIcon ? 'transparent' : getLetterColor(item.name),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {hasIcon ? (
-                      <img src={`data:image/png;base64,${iconCache[item.name]}`} alt={item.name} style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 10 }} />
+                      <img src={`data:image/png;base64,${iconCache[item.name]}`} alt={item.name} style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 9 }} />
                     ) : (
-                      <span className="font-body font-bold" style={{ fontSize: 16, color: '#fff' }}>{item.name.charAt(0).toUpperCase()}</span>
+                      <span className="font-body font-bold" style={{ fontSize: 14, color: '#fff' }}>{item.name.charAt(0).toUpperCase()}</span>
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="font-body font-bold" style={{ fontSize: 13, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div
+                      className="font-body font-bold"
+                      title={item.name}
+                      style={{ fontSize: 12.5, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    >
                       {item.name}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                      <span className="font-body" style={{ fontSize: 11, color: item.isLowStock ? 'var(--danger)' : 'var(--foreground-muted)' }}>
-                        {item.quantity} {item.unit || ''}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                      <span className="font-body font-bold" style={{ fontSize: 11, color: item.isLowStock ? 'var(--danger)' : 'var(--foreground-muted)' }}>
+                        {item.quantity} {item.unit || 'units'}
                       </span>
                       {item.source && <Badge color={sc.color} bg={sc.bg}>{item.source}</Badge>}
+                      {!hasIcon && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleGenerateIcon(item.name); }}
+                          disabled={generatingIcon === item.name}
+                          className="font-body font-bold"
+                          style={{
+                            fontSize: 9, color: 'var(--accent)', background: 'var(--accent-bg)',
+                            border: 'none', borderRadius: 'var(--radius-sm)', padding: '2px 6px',
+                            cursor: generatingIcon === item.name ? 'wait' : 'pointer',
+                            opacity: generatingIcon === item.name ? 0.5 : 1, whiteSpace: 'nowrap', marginLeft: 'auto',
+                          }}
+                        >
+                          {generatingIcon === item.name ? '...' : 'Gen Icon'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  {!hasIcon && (
-                    <button
-                      onClick={() => handleGenerateIcon(item.name)}
-                      disabled={generatingIcon === item.name}
-                      className="font-body font-bold"
-                      style={{
-                        fontSize: 9, color: 'var(--accent)', background: 'var(--accent-bg)',
-                        border: 'none', borderRadius: 'var(--radius-sm)', padding: '3px 7px',
-                        cursor: generatingIcon === item.name ? 'wait' : 'pointer',
-                        opacity: generatingIcon === item.name ? 0.5 : 1, whiteSpace: 'nowrap', flexShrink: 0,
-                      }}
-                    >
-                      {generatingIcon === item.name ? '...' : 'Gen Icon'}
-                    </button>
-                  )}
                 </div>
               );
             })}
