@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { getInventory, getMealPlan, getOrders, getUserId, discoverUser, getLastPhoto } from '../services/api';
+import { getInventory, getMealPlan, getOrders, getUserId, discoverUser, discoverUserByPhone, getLastPhoto, setUserId } from '../services/api';
 import { eventStream } from '../services/stream';
 
 interface InventoryItem {
@@ -30,6 +30,10 @@ interface DataContextType {
   fridgeChanges: { delta: number; name: string }[];
   connected: boolean;
   browserAgent: BrowserAgentState;
+  connectError: string | null;
+  connectLoading: boolean;
+  connectByChatId: (chatId: string) => Promise<void>;
+  skipConnect: () => Promise<void>;
   refreshInventory: () => Promise<void>;
   refreshMealPlan: () => Promise<void>;
   refreshOrders: () => Promise<void>;
@@ -45,6 +49,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const [fridgeChanges, setFridgeChanges] = useState<{ delta: number; name: string }[]>([]);
   const [connected, setConnected] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [connectLoading, setConnectLoading] = useState(false);
   const [browserAgent, setBrowserAgent] = useState<BrowserAgentState>({
     screenshot: null,
     description: '',
@@ -108,39 +114,50 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [userId]);
 
-  // Auto-discover user on mount, poll every 5s if not found
-  useEffect(() => {
-    let pollTimer: ReturnType<typeof setInterval> | null = null;
-    let cancelled = false;
-
-    const tryDiscover = async () => {
-      const uid = await discoverUser();
-      if (!cancelled && uid) {
+  const connectByChatId = useCallback(async (chatId: string) => {
+    setConnectLoading(true);
+    setConnectError(null);
+    try {
+      const uid = await discoverUserByPhone(chatId);
+      if (uid) {
         setUserIdState(uid);
         setConnected(true);
-        if (pollTimer) {
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
-      }
-    };
-
-    tryDiscover();
-
-    // If no user found yet, poll every 5s
-    pollTimer = setInterval(() => {
-      if (!getUserId()) {
-        tryDiscover();
       } else {
-        if (pollTimer) clearInterval(pollTimer);
+        setConnectError('No account found for this Chat ID. Make sure you\'ve messaged Bobby on Telegram first.');
       }
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      if (pollTimer) clearInterval(pollTimer);
-    };
+    } catch (e) {
+      setConnectError('Could not connect. Try again.');
+    } finally {
+      setConnectLoading(false);
+    }
   }, []);
+
+  const skipConnect = useCallback(async () => {
+    setConnectLoading(true);
+    setConnectError(null);
+    try {
+      const uid = await discoverUser();
+      if (uid) {
+        setUserIdState(uid);
+        setConnected(true);
+      } else {
+        setConnectError('No users found yet. Message Bobby on Telegram first.');
+      }
+    } catch (e) {
+      setConnectError('Backend not available.');
+    } finally {
+      setConnectLoading(false);
+    }
+  }, []);
+
+  // Check URL params for chat_id on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const chatId = params.get('chat_id');
+    if (chatId) {
+      connectByChatId(chatId);
+    }
+  }, [connectByChatId]);
 
   // Fetch all data when userId becomes available
   useEffect(() => {
@@ -236,6 +253,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         fridgeChanges,
         connected,
         browserAgent,
+        connectError,
+        connectLoading,
+        connectByChatId,
+        skipConnect,
         refreshInventory,
         refreshMealPlan,
         refreshOrders,

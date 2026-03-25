@@ -34,6 +34,19 @@ export async function discoverUser(): Promise<string | null> {
   return null;
 }
 
+export async function discoverUserByPhone(phone: string): Promise<string | null> {
+  try {
+    const data = await fetchApi(`/dashboard/users/by-phone/${encodeURIComponent(phone)}`);
+    if (data && data.id) {
+      setUserId(data.id);
+      return data.id;
+    }
+  } catch (e) {
+    /* user not found */
+  }
+  return null;
+}
+
 export async function getLastPhoto(userId: string): Promise<string | null> {
   try {
     const data = await fetchApi(`/dashboard/photos/${userId}/last`);

@@ -1,10 +1,13 @@
 import { useTheme } from './context/ThemeContext';
+import { useData } from './context/DataContext';
 import BentoGrid from './components/bento/BentoGrid';
 import { BrowserAgentOverlay } from './components/BrowserAgentOverlay';
+import { ConnectScreen } from './components/ConnectScreen';
 import ginghamPattern from './assets/ginham_pattern.png';
 
 function App() {
   const { isNightMode } = useTheme();
+  const { connected, connectByChatId, skipConnect, connectError, connectLoading } = useData();
 
   return (
     <div
@@ -34,7 +37,7 @@ function App() {
         />
       )}
 
-      {/* Main cream card — bigger: 24px margin instead of 48px */}
+      {/* Main cream card */}
       <div
         style={{
           width: 'calc(100vw - 24px)',
@@ -52,7 +55,16 @@ function App() {
           transition: 'background 0.3s ease',
         }}
       >
-        <BentoGrid />
+        {connected ? (
+          <BentoGrid />
+        ) : (
+          <ConnectScreen
+            onConnect={connectByChatId}
+            onSkip={skipConnect}
+            error={connectError}
+            loading={connectLoading}
+          />
+        )}
       </div>
 
       <BrowserAgentOverlay />
