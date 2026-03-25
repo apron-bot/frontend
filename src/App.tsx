@@ -21,7 +21,6 @@ function App() {
         position: 'relative',
       }}
     >
-      {/* Night mode dark overlay to dim gingham */}
       {isNightMode && (
         <div
           style={{
@@ -34,12 +33,12 @@ function App() {
         />
       )}
 
-      {/* Main cream card */}
+      {/* Main cream card — bigger: 24px margin instead of 48px */}
       <div
         style={{
-          width: 'calc(100vw - 48px)',
-          height: 'calc(100dvh - 48px)',
-          maxWidth: '1200px',
+          width: 'calc(100vw - 24px)',
+          height: 'calc(100dvh - 24px)',
+          maxWidth: '1400px',
           background: 'var(--background)',
           borderRadius: 'var(--radius-xl)',
           border: '1px solid var(--border)',

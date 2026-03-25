@@ -17,7 +17,14 @@ export default function Bobby({ size = 80 }: { size?: number }) {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.3 }}
-          style={{ width: '100%', height: '100%', objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
+          style={{
+            width: isDayMode ? '100%' : '130%',
+            height: isDayMode ? '100%' : '130%',
+            objectFit: 'contain',
+            position: 'absolute',
+            top: isDayMode ? 0 : '-15%',
+            left: isDayMode ? 0 : '-15%',
+          }}
         />
       </AnimatePresence>
     </div>
