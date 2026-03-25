@@ -1,5 +1,6 @@
 import { useTheme } from './context/ThemeContext';
 import BentoGrid from './components/bento/BentoGrid';
+import { BrowserAgentOverlay } from './components/BrowserAgentOverlay';
 import ginghamPattern from './assets/ginham_pattern.png';
 
 function App() {
@@ -53,6 +54,8 @@ function App() {
       >
         <BentoGrid />
       </div>
+
+      <BrowserAgentOverlay />
     </div>
   );
 }

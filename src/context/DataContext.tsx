@@ -13,6 +13,14 @@ interface InventoryItem {
   source: string;
 }
 
+interface BrowserAgentState {
+  screenshot: string | null;
+  description: string;
+  step: number;
+  status: 'idle' | 'starting' | 'in_progress' | 'done' | 'failed';
+  cartUrl: string | null;
+}
+
 interface DataContextType {
   inventory: InventoryItem[];
   mealPlan: any | null;
@@ -21,6 +29,7 @@ interface DataContextType {
   lastPhoto: string | null;
   fridgeChanges: { delta: number; name: string }[];
   connected: boolean;
+  browserAgent: BrowserAgentState;
   refreshInventory: () => Promise<void>;
   refreshMealPlan: () => Promise<void>;
   refreshOrders: () => Promise<void>;
@@ -36,6 +45,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const [fridgeChanges, setFridgeChanges] = useState<{ delta: number; name: string }[]>([]);
   const [connected, setConnected] = useState(false);
+  const [browserAgent, setBrowserAgent] = useState<BrowserAgentState>({
+    screenshot: null,
+    description: '',
+    step: 0,
+    status: 'idle',
+    cartUrl: null,
+  });
   const [userId, setUserIdState] = useState<string | null>(getUserId());
   const inventoryRef = useRef<InventoryItem[]>([]);
 
@@ -190,10 +206,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       refreshOrders();
     });
 
+    const unsubBrowser = eventStream.on('browser_step', (data) => {
+      setBrowserAgent({
+        screenshot: data.screenshot || null,
+        description: data.description || '',
+        step: data.step ?? 0,
+        status: data.status || 'in_progress',
+        cartUrl: data.cart_url || null,
+      });
+    });
+
     return () => {
       unsubInventory();
       unsubPhoto();
       unsubMessage();
+      unsubBrowser();
       eventStream.disconnect();
     };
   }, [refreshInventory, refreshMealPlan, refreshOrders, refreshLastPhoto]);
@@ -208,6 +235,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         lastPhoto,
         fridgeChanges,
         connected,
+        browserAgent,
         refreshInventory,
         refreshMealPlan,
         refreshOrders,
