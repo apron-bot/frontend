@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { getInventory, getMealPlan, getOrders, getUserId, discoverUser, discoverUserByPhone, getLastPhoto, setUserId } from '../services/api';
+import { getInventory, getMealPlan, getOrders, getUserId, discoverUser, discoverUserByPhone, getLastPhoto } from '../services/api';
 import { eventStream } from '../services/stream';
 
 interface InventoryItem {
