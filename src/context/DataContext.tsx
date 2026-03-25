@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { getInventory, getMealPlan, getOrders, getUserId } from '../services/api';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { getInventory, getMealPlan, getOrders, getUserId, discoverUser, getLastPhoto } from '../services/api';
 import { eventStream } from '../services/stream';
 
 interface InventoryItem {
@@ -18,8 +18,9 @@ interface DataContextType {
   mealPlan: any | null;
   orders: any[];
   loading: boolean;
-  lastScanImage: string | null;
+  lastPhoto: string | null;
   fridgeChanges: { delta: number; name: string }[];
+  connected: boolean;
   refreshInventory: () => Promise<void>;
   refreshMealPlan: () => Promise<void>;
   refreshOrders: () => Promise<void>;
@@ -31,26 +32,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [mealPlan, setMealPlan] = useState<any | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
-  const [loading] = useState(false);
-  const [lastScanImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lastPhoto, setLastPhoto] = useState<string | null>(null);
   const [fridgeChanges, setFridgeChanges] = useState<{ delta: number; name: string }[]>([]);
+  const [connected, setConnected] = useState(false);
+  const [userId, setUserIdState] = useState<string | null>(getUserId());
+  const inventoryRef = useRef<InventoryItem[]>([]);
 
-  const userId = getUserId();
+  // Keep ref in sync
+  inventoryRef.current = inventory;
 
   const refreshInventory = useCallback(async () => {
-    if (!userId) return;
+    const uid = userId || getUserId();
+    if (!uid) return;
     try {
-      const items = await getInventory(userId);
-      setInventory(items);
+      const items = await getInventory(uid);
+      if (Array.isArray(items)) {
+        setInventory(items);
+      }
     } catch (e) {
       /* silently fail */
     }
   }, [userId]);
 
   const refreshMealPlan = useCallback(async () => {
-    if (!userId) return;
+    const uid = userId || getUserId();
+    if (!uid) return;
     try {
-      const plan = await getMealPlan(userId);
+      const plan = await getMealPlan(uid);
       setMealPlan(plan);
     } catch (e) {
       /* silently fail */
@@ -58,23 +67,77 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const refreshOrders = useCallback(async () => {
-    if (!userId) return;
+    const uid = userId || getUserId();
+    if (!uid) return;
     try {
-      const orderList = await getOrders(userId);
-      setOrders(orderList);
+      const orderList = await getOrders(uid);
+      if (Array.isArray(orderList)) {
+        setOrders(orderList);
+      }
     } catch (e) {
       /* silently fail */
     }
   }, [userId]);
 
-  // Initial data fetch
+  const refreshLastPhoto = useCallback(async () => {
+    const uid = userId || getUserId();
+    if (!uid) return;
+    try {
+      const photo = await getLastPhoto(uid);
+      if (photo) {
+        setLastPhoto(photo);
+      }
+    } catch (e) {
+      /* silently fail */
+    }
+  }, [userId]);
+
+  // Auto-discover user on mount, poll every 5s if not found
+  useEffect(() => {
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let cancelled = false;
+
+    const tryDiscover = async () => {
+      const uid = await discoverUser();
+      if (!cancelled && uid) {
+        setUserIdState(uid);
+        setConnected(true);
+        if (pollTimer) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+        }
+      }
+    };
+
+    tryDiscover();
+
+    // If no user found yet, poll every 5s
+    pollTimer = setInterval(() => {
+      if (!getUserId()) {
+        tryDiscover();
+      } else {
+        if (pollTimer) clearInterval(pollTimer);
+      }
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, []);
+
+  // Fetch all data when userId becomes available
   useEffect(() => {
     if (userId) {
-      refreshInventory();
-      refreshMealPlan();
-      refreshOrders();
+      setLoading(true);
+      Promise.all([
+        refreshInventory(),
+        refreshMealPlan(),
+        refreshOrders(),
+        refreshLastPhoto(),
+      ]).finally(() => setLoading(false));
     }
-  }, [userId, refreshInventory, refreshMealPlan, refreshOrders]);
+  }, [userId, refreshInventory, refreshMealPlan, refreshOrders, refreshLastPhoto]);
 
   // Subscribe to SSE events
   useEffect(() => {
@@ -82,20 +145,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const unsubInventory = eventStream.on('inventory_updated', (data) => {
       if (data.items) {
-        // Calculate changes from previous inventory
         const newItems: InventoryItem[] = data.items;
+        const oldInventory = inventoryRef.current;
         const changes: { delta: number; name: string }[] = [];
 
         for (const item of newItems) {
-          const old = inventory.find((i) => i.name === item.name);
+          const old = oldInventory.find((i) => i.name === item.name);
           if (!old) {
             changes.push({ delta: item.quantity, name: item.name });
           } else if (item.quantity !== old.quantity) {
             changes.push({ delta: item.quantity - old.quantity, name: item.name });
           }
         }
-        // Items removed
-        for (const old of inventory) {
+        for (const old of oldInventory) {
           if (!newItems.find((i) => i.name === old.name)) {
             changes.push({ delta: -old.quantity, name: old.name });
           }
@@ -105,11 +167,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           setFridgeChanges(changes);
         }
         setInventory(newItems);
+      } else {
+        // No inline items, just refresh from backend
+        refreshInventory();
       }
     });
 
+    const unsubPhoto = eventStream.on('photo_received', (data) => {
+      if (data && data.image_b64) {
+        setLastPhoto(data.image_b64);
+      } else {
+        // Refresh photo from backend
+        refreshLastPhoto();
+      }
+      // Also refresh inventory since a photo likely triggers inventory update
+      refreshInventory();
+    });
+
     const unsubMessage = eventStream.on('message_processed', () => {
-      // Refresh all data when a message is processed
       refreshInventory();
       refreshMealPlan();
       refreshOrders();
@@ -117,10 +192,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     return () => {
       unsubInventory();
+      unsubPhoto();
       unsubMessage();
       eventStream.disconnect();
     };
-  }, []);
+  }, [refreshInventory, refreshMealPlan, refreshOrders, refreshLastPhoto]);
 
   return (
     <DataContext.Provider
@@ -129,8 +205,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         mealPlan,
         orders,
         loading,
-        lastScanImage,
+        lastPhoto,
         fridgeChanges,
+        connected,
         refreshInventory,
         refreshMealPlan,
         refreshOrders,

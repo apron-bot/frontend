@@ -5,7 +5,7 @@ import type { MealPlanDay } from '../../types';
 
 export default function MealPlanBox() {
   const [skippedDays, setSkippedDays] = useState<Set<number>>(new Set());
-  const { mealPlan } = useData();
+  const { mealPlan, connected } = useData();
 
   const toggleDay = (index: number) => {
     setSkippedDays((prev) => {
@@ -21,6 +21,7 @@ export default function MealPlanBox() {
 
   // Convert live meal plan data to display format, or use mock
   let displayPlan: MealPlanDay[] = mockMealPlan;
+  let hasLiveData = false;
 
   if (mealPlan && mealPlan.days && Array.isArray(mealPlan.days)) {
     displayPlan = mealPlan.days.map((day: any) => ({
@@ -32,6 +33,7 @@ export default function MealPlanBox() {
       cooked: day.cooked || false,
       isToday: day.isToday || false,
     }));
+    hasLiveData = true;
   } else if (mealPlan && Array.isArray(mealPlan)) {
     displayPlan = mealPlan.map((day: any) => ({
       day: day.day || day.name || '',
@@ -42,6 +44,7 @@ export default function MealPlanBox() {
       cooked: day.cooked || false,
       isToday: day.isToday || false,
     }));
+    hasLiveData = true;
   }
 
   return (
@@ -66,16 +69,29 @@ export default function MealPlanBox() {
           marginBottom: 8,
         }}
       >
-        <span
-          style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 800,
-            fontSize: 13,
-            color: 'var(--foreground)',
-          }}
-        >
-          Meal Plan
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            style={{
+              fontFamily: "'Nunito', sans-serif",
+              fontWeight: 800,
+              fontSize: 13,
+              color: 'var(--foreground)',
+            }}
+          >
+            Meal Plan
+          </span>
+          {connected && hasLiveData && (
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--success)',
+                display: 'inline-block',
+              }}
+            />
+          )}
+        </div>
         <span
           style={{
             fontFamily: "'Nunito', sans-serif",

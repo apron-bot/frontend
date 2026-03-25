@@ -20,6 +20,49 @@ async function fetchApi(path: string, options?: RequestInit) {
   return res.json();
 }
 
+export async function discoverUser(): Promise<string | null> {
+  try {
+    const users = await fetchApi('/dashboard/users');
+    if (users.length > 0) {
+      const userId = users[0].id;
+      setUserId(userId);
+      return userId;
+    }
+  } catch (e) {
+    /* backend not available */
+  }
+  return null;
+}
+
+export async function getLastPhoto(userId: string): Promise<string | null> {
+  try {
+    const data = await fetchApi(`/dashboard/photos/${userId}/last`);
+    return data.image_b64;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function generateFoodIcon(foodName: string): Promise<string | null> {
+  try {
+    const data = await fetchApi(`/dashboard/icons/${encodeURIComponent(foodName)}/generate`, {
+      method: 'POST',
+    });
+    return data.image_b64;
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function getFoodIcon(foodName: string): Promise<string | null> {
+  try {
+    const data = await fetchApi(`/dashboard/icons/${encodeURIComponent(foodName)}`);
+    return data.image_b64;
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function getInventory(userId: string) {
   return fetchApi(`/dashboard/inventory/${userId}`);
 }

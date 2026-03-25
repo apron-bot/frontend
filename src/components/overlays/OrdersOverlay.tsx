@@ -1,5 +1,6 @@
 import SlideUpSheet from '../shared/SlideUpSheet';
 import Badge from '../shared/Badge';
+import Button from '../shared/Button';
 import { useData } from '../../context/DataContext';
 import { mockOrders } from '../../data/mock';
 
@@ -9,7 +10,7 @@ interface OrdersOverlayProps {
 }
 
 export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
-  const { orders } = useData();
+  const { orders, connected } = useData();
 
   // Use live orders if available, otherwise fall back to mock data
   const hasLiveData = orders.length > 0;
@@ -18,12 +19,16 @@ export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
   // Status badge style
   const statusStyle = (status: string) => {
     switch (status) {
+      case 'pending':
+        return { color: 'var(--warning)', bg: 'var(--warning-bg, rgba(255,170,0,0.1))' };
+      case 'confirmed':
+        return { color: '#5BA4D9', bg: 'rgba(91,164,217,0.1)' };
       case 'delivering':
         return { color: 'var(--warning)', bg: 'var(--warning-bg, rgba(255,170,0,0.1))' };
       case 'delivered':
         return { color: 'var(--success)', bg: 'var(--success-bg)' };
-      case 'pending':
-        return { color: 'var(--foreground-muted)', bg: 'var(--background-tertiary)' };
+      case 'failed':
+        return { color: 'var(--danger)', bg: 'var(--danger-bg, rgba(255,80,80,0.1))' };
       default:
         return { color: 'var(--foreground-muted)', bg: 'var(--background-tertiary)' };
     }
@@ -48,7 +53,7 @@ export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
             {displayOrders.length}
           </Badge>
         </div>
-        {hasLiveData && (
+        {connected && (
           <Badge color="var(--success)" bg="var(--success-bg)">
             Live
           </Badge>
@@ -67,10 +72,13 @@ export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
         ) : (
           displayOrders.map((order: any, index: number) => {
             const ss = statusStyle(order.status);
-            const storeName = (order.storeName || order.store_name || 'Order').split(' \u2014 ')[0];
-            const total = order.items
-              ? order.items.reduce((sum: number, item: any) => sum + (item.price || 0) * (item.quantity || 1), 0)
-              : 0;
+            const storeName = (order.storeName || order.store_name || order.store || 'Order').split(' \u2014 ')[0];
+            const total = order.total_price
+              ? order.total_price
+              : order.items
+                ? order.items.reduce((sum: number, item: any) => sum + (item.price || 0) * (item.quantity || 1), 0)
+                : 0;
+            const isTrackable = order.status === 'pending' || order.status === 'confirmed' || order.status === 'delivering';
 
             return (
               <div
@@ -123,9 +131,11 @@ export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
                     </div>
                   </div>
 
-                  <Badge color={ss.color} bg={ss.bg}>
-                    {order.status}
-                  </Badge>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <Badge color={ss.color} bg={ss.bg}>
+                      {order.status}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Order items */}
@@ -166,10 +176,19 @@ export default function OrdersOverlay({ isOpen, onClose }: OrdersOverlayProps) {
                           Total
                         </span>
                         <span className="font-body font-bold" style={{ fontSize: 12, color: 'var(--foreground)' }}>
-                          {'\u20AC'}{total.toFixed(2)}
+                          {'\u20AC'}{Number(total).toFixed(2)}
                         </span>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Track button for pending/confirmed orders */}
+                {isTrackable && (
+                  <div style={{ marginLeft: 46, marginTop: 8 }}>
+                    <Button variant="secondary" className="text-[11px] py-2 px-4">
+                      Track Order
+                    </Button>
                   </div>
                 )}
               </div>

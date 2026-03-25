@@ -1,3 +1,4 @@
+import { useRef, useCallback } from 'react';
 import CardHeader from './CardHeader';
 import ScanFridgeBox from './ScanFridgeBox';
 import ShoppingListBox from './ShoppingListBox';
@@ -5,6 +6,16 @@ import MealPlanBox from './MealPlanBox';
 import DeliveryTimelineBox from './DeliveryTimelineBox';
 
 export default function BentoGrid() {
+  const openOverlayRef = useRef<((tab: 'Dashboard' | 'Pantry' | 'Recipes' | 'Orders') => void) | null>(null);
+
+  const handleOverlayChange = useCallback((openFn: (tab: 'Dashboard' | 'Pantry' | 'Recipes' | 'Orders') => void) => {
+    openOverlayRef.current = openFn;
+  }, []);
+
+  const handleOpenPantry = useCallback(() => {
+    openOverlayRef.current?.('Pantry');
+  }, []);
+
   return (
     <div
       style={{
@@ -23,10 +34,10 @@ export default function BentoGrid() {
       }}
     >
       <div style={{ gridArea: 'header' }}>
-        <CardHeader />
+        <CardHeader onOverlayChange={handleOverlayChange} />
       </div>
       <div style={{ gridArea: 'fridge', minHeight: 0 }}>
-        <ScanFridgeBox />
+        <ScanFridgeBox onOpenPantry={handleOpenPantry} />
       </div>
       <div style={{ gridArea: 'shopping', minHeight: 0 }}>
         <ShoppingListBox />

@@ -2,14 +2,23 @@ import ramenImg from '../../assets/ramen.png';
 import { mockFridgeChanges } from '../../data/mock';
 import { useData } from '../../context/DataContext';
 
-export default function ScanFridgeBox() {
-  const { inventory, fridgeChanges } = useData();
+interface ScanFridgeBoxProps {
+  onOpenPantry?: () => void;
+}
+
+export default function ScanFridgeBox({ onOpenPantry }: ScanFridgeBoxProps) {
+  const { inventory, fridgeChanges, lastPhoto, connected } = useData();
 
   // Use live fridge changes from SSE if available, otherwise fall back to mock
   const hasLiveChanges = fridgeChanges.length > 0;
   const displayChanges = hasLiveChanges
     ? fridgeChanges.map((c) => ({ delta: c.delta, name: c.name }))
     : mockFridgeChanges;
+
+  // Use last photo from backend if available, otherwise ramen placeholder
+  const fridgeImageSrc = lastPhoto
+    ? `data:image/jpeg;base64,${lastPhoto}`
+    : ramenImg;
 
   return (
     <div
@@ -36,7 +45,7 @@ export default function ScanFridgeBox() {
           }}
         >
           <img
-            src={ramenImg}
+            src={fridgeImageSrc}
             alt="Fridge scan"
             style={{
               width: '100%',
@@ -88,6 +97,22 @@ export default function ScanFridgeBox() {
             >
               {inventory.length} items
             </div>
+          )}
+
+          {/* Connected indicator */}
+          {connected && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: 'var(--success)',
+                border: '1.5px solid rgba(255,255,255,0.8)',
+              }}
+            />
           )}
         </div>
 
@@ -173,6 +198,7 @@ export default function ScanFridgeBox() {
           {/* See more link */}
           <span
             className="font-body font-bold"
+            onClick={onOpenPantry}
             style={{
               marginTop: 'auto',
               fontSize: 11,

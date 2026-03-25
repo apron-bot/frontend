@@ -2,7 +2,7 @@ import { mockShoppingList } from '../../data/mock';
 import { useData } from '../../context/DataContext';
 
 export default function ShoppingListBox() {
-  const { inventory } = useData();
+  const { inventory, connected } = useData();
 
   // Build a shopping list from inventory low-stock items if we have live data
   // Otherwise fall back to mock data
@@ -45,12 +45,25 @@ export default function ShoppingListBox() {
           marginBottom: 8,
         }}
       >
-        <span
-          className="font-body font-bold"
-          style={{ fontSize: 13, color: 'var(--foreground)' }}
-        >
-          {hasLiveData && liveShoppingItems.length > 0 ? 'Low Stock' : 'Weekly Groceries'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            className="font-body font-bold"
+            style={{ fontSize: 13, color: 'var(--foreground)' }}
+          >
+            {hasLiveData && liveShoppingItems.length > 0 ? 'Low Stock' : 'Weekly Groceries'}
+          </span>
+          {connected && hasLiveData && (
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: 'var(--success)',
+                display: 'inline-block',
+              }}
+            />
+          )}
+        </div>
         <span
           className="font-body"
           style={{ fontSize: 10, color: 'var(--foreground-muted)' }}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Bobby from './Bobby';
 import { useTheme } from '../../context/ThemeContext';
 import { useGreeting } from '../../hooks/useGreeting';
@@ -9,21 +9,31 @@ import OrdersOverlay from '../overlays/OrdersOverlay';
 const NAV_TABS = ['Dashboard', 'Pantry', 'Recipes', 'Orders'] as const;
 type NavTab = (typeof NAV_TABS)[number];
 
-export default function CardHeader() {
+interface CardHeaderProps {
+  onOverlayChange?: (openOverlayFn: (tab: NavTab) => void) => void;
+}
+
+export default function CardHeader({ onOverlayChange }: CardHeaderProps) {
   const { isDayMode, toggleMode } = useTheme();
   const greeting = useGreeting();
   const [openOverlay, setOpenOverlay] = useState<NavTab | null>(null);
 
   const greetingText = isDayMode ? greeting.text : greeting.nightText;
 
-  const handleTabClick = (tab: NavTab) => {
+  const handleTabClick = useCallback((tab: NavTab) => {
     if (tab === 'Dashboard') {
-      // Dashboard is always the main view, close any overlay
       setOpenOverlay(null);
     } else {
       setOpenOverlay(tab);
     }
-  };
+  }, []);
+
+  // Expose the overlay open function to parent
+  useEffect(() => {
+    if (onOverlayChange) {
+      onOverlayChange(handleTabClick);
+    }
+  }, [onOverlayChange, handleTabClick]);
 
   return (
     <>
@@ -47,7 +57,7 @@ export default function CardHeader() {
         {/* Right side: nav tabs + mode toggle */}
         <div className="flex items-center gap-2">
           {NAV_TABS.map((tab) => {
-            const isActive = tab === 'Dashboard' && !openOverlay;
+            const isActive = (tab === 'Dashboard' && !openOverlay) || openOverlay === tab;
             return (
               <button
                 key={tab}
