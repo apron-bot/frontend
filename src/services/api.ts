@@ -1,14 +1,24 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'https://backend-production-caab.up.railway.app';
 
-// For demo: we'll use the first user. In production, this would come from auth.
-let currentUserId: string | null = null;
+const STORAGE_KEY = 'kittycook_user_id';
+
+let currentUserId: string | null = localStorage.getItem(STORAGE_KEY);
 
 export function setUserId(id: string) {
   currentUserId = id;
+  localStorage.setItem(STORAGE_KEY, id);
 }
 
 export function getUserId(): string | null {
+  if (!currentUserId) {
+    currentUserId = localStorage.getItem(STORAGE_KEY);
+  }
   return currentUserId;
+}
+
+export function clearUserId() {
+  currentUserId = null;
+  localStorage.removeItem(STORAGE_KEY);
 }
 
 async function fetchApi(path: string, options?: RequestInit) {

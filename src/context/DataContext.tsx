@@ -61,6 +61,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [userId, setUserIdState] = useState<string | null>(getUserId());
   const inventoryRef = useRef<InventoryItem[]>([]);
 
+  // Auto-reconnect from localStorage on mount
+  useEffect(() => {
+    const stored = getUserId();
+    if (stored && !connected) {
+      setUserIdState(stored);
+      setConnected(true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Keep ref in sync
   inventoryRef.current = inventory;
 

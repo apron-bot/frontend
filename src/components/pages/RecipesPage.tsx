@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Badge from '../shared/Badge';
 import Button from '../shared/Button';
 import { getFavoriteRecipes, generateRecipes, getUserId, type RecipeFilters } from '../../services/api';
-import { mockRecipes } from '../../data/mock';
+import { useData } from '../../context/DataContext';
 
 // Inline SVG radar chart for flavor profile
 const FLAVORS = ['Salty', 'Sweet', 'Sour', 'Spicy', 'Umami'] as const;
@@ -51,11 +51,11 @@ function FlavorRadar({ data, onChange }: { data: Record<string, number>; onChang
 }
 
 export default function RecipesPage() {
+  const { mealPlan } = useData();
   const [favorites, setFavorites] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [useMock, setUseMock] = useState(false);
   const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
 
   // Generator controls
@@ -65,14 +65,13 @@ export default function RecipesPage() {
 
   useEffect(() => {
     const userId = getUserId();
-    if (!userId) { setUseMock(true); return; }
+    if (!userId) return;
     setLoading(true);
     getFavoriteRecipes(userId)
       .then(data => {
-        if (data?.length > 0) { setFavorites(data); setUseMock(false); }
-        else setUseMock(true);
+        if (data?.length > 0) setFavorites(data);
       })
-      .catch(() => setUseMock(true))
+      .catch(() => { /* silently fail */ })
       .finally(() => setLoading(false));
   }, []);
 
@@ -101,7 +100,24 @@ export default function RecipesPage() {
     return { color: 'var(--foreground-muted)', bg: 'var(--background-tertiary)' };
   };
 
-  const recipes = useMock ? mockRecipes : favorites;
+  // Extract recipes from the weekly meal plan
+  const mealPlanRecipes: any[] = [];
+  if (mealPlan?.meals && Array.isArray(mealPlan.meals)) {
+    const seen = new Set<string>();
+    for (const meal of mealPlan.meals) {
+      if (meal.recipe) {
+        const name = meal.recipe.name || meal.recipe.title || '';
+        if (name && !seen.has(name)) {
+          seen.add(name);
+          mealPlanRecipes.push(meal.recipe);
+        }
+      }
+    }
+  }
+
+  // Show favorites if available, otherwise show meal plan recipes
+  const recipes = favorites.length > 0 ? favorites : mealPlanRecipes;
+  const hasLiveData = recipes.length > 0;
 
   const renderCard = (recipe: any, index: number) => {
     const ds = diffStyle(recipe.difficulty || '');
@@ -249,7 +265,7 @@ export default function RecipesPage() {
             <span className="font-heading font-extrabold" style={{ fontSize: 20, color: 'var(--foreground)' }}>Recipes</span>
             <Badge color="var(--foreground-muted)" bg="var(--background-tertiary)">{recipes.length + suggestions.length}</Badge>
           </div>
-          {!useMock && <Badge color="var(--success)" bg="var(--success-bg)">Live</Badge>}
+          {hasLiveData && <Badge color="var(--success)" bg="var(--success-bg)">Live</Badge>}
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto' }} className="hide-scrollbar">
