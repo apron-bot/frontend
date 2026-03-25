@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import bobbyChef from '../assets/bobby.png';
 
 interface ConnectScreenProps {
   onConnect: (chatId: string) => void;
@@ -25,13 +26,20 @@ export function ConnectScreen({ onConnect, onSkip, error, loading }: ConnectScre
       className="flex items-center justify-center h-full w-full p-8"
     >
       <div className="max-w-md w-full text-center">
-        {/* Logo / Title */}
+        {/* Bobby + Title */}
         <div className="mb-8">
-          <div className="text-6xl mb-4">👨‍🍳</div>
-          <h1 style={{ fontFamily: 'var(--font-display, serif)', fontSize: '2rem', fontWeight: 700 }}>
-            Apron
+          <img
+            src={bobbyChef}
+            alt="Bobby the cat chef"
+            style={{ width: 100, height: 100, objectFit: 'contain', margin: '0 auto 12px' }}
+          />
+          <h1
+            className="font-pixel"
+            style={{ color: 'var(--accent)', fontSize: '1.4rem', letterSpacing: '-0.5px' }}
+          >
+            KittyCook
           </h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+          <p style={{ color: 'var(--foreground-muted)', marginTop: '0.5rem', fontSize: '0.95rem' }}>
             Connect your Telegram to see your kitchen dashboard
           </p>
         </div>
@@ -48,25 +56,26 @@ export function ConnectScreen({ onConnect, onSkip, error, loading }: ConnectScre
               style={{
                 width: '100%',
                 padding: '14px 18px',
-                borderRadius: 'var(--radius-lg, 12px)',
+                borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border)',
-                background: 'var(--surface)',
-                color: 'var(--text-primary)',
+                background: 'var(--background-secondary)',
+                color: 'var(--foreground)',
                 fontSize: '1rem',
+                fontFamily: 'Nunito, sans-serif',
                 outline: 'none',
                 transition: 'border-color 0.2s',
               }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--accent, #e07a5f)'}
+              onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
               onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
             />
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '0.5rem', textAlign: 'left' }}>
+            <p style={{ color: 'var(--foreground-hint)', fontSize: '0.8rem', marginTop: '0.5rem', textAlign: 'left' }}>
               Send <strong>/start</strong> to Bobby on Telegram, then enter your Chat ID here.
               You can find it by sending <strong>/id</strong> to <strong>@userinfobot</strong> on Telegram.
             </p>
           </div>
 
           {error && (
-            <p style={{ color: '#e07a5f', fontSize: '0.875rem' }}>
+            <p style={{ color: 'var(--danger)', fontSize: '0.875rem' }}>
               {error}
             </p>
           )}
@@ -77,11 +86,12 @@ export function ConnectScreen({ onConnect, onSkip, error, loading }: ConnectScre
             style={{
               width: '100%',
               padding: '14px',
-              borderRadius: 'var(--radius-lg, 12px)',
-              background: loading ? 'var(--border)' : 'var(--accent, #e07a5f)',
+              borderRadius: 'var(--radius-lg)',
+              background: loading ? 'var(--foreground-hint)' : 'var(--accent)',
               color: '#fff',
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '1rem',
+              fontFamily: 'Nunito, sans-serif',
               border: 'none',
               cursor: loading ? 'wait' : 'pointer',
               transition: 'background 0.2s',
@@ -97,11 +107,12 @@ export function ConnectScreen({ onConnect, onSkip, error, loading }: ConnectScre
             style={{
               width: '100%',
               padding: '12px',
-              borderRadius: 'var(--radius-lg, 12px)',
+              borderRadius: 'var(--radius-lg)',
               background: 'transparent',
-              color: 'var(--text-secondary)',
+              color: 'var(--foreground-muted)',
               fontWeight: 500,
               fontSize: '0.875rem',
+              fontFamily: 'Nunito, sans-serif',
               border: '1px solid var(--border)',
               cursor: 'pointer',
               transition: 'background 0.2s',

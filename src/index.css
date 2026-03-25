@@ -89,3 +89,7 @@ body {
 .pulse-dot {
   animation: pulse-dot 2s infinite;
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
