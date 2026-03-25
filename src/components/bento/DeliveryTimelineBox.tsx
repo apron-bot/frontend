@@ -1,4 +1,5 @@
 import { mockOrders } from '../../data/mock';
+import { useData } from '../../context/DataContext';
 
 interface TimelineStep {
   label: string;
@@ -7,15 +8,42 @@ interface TimelineStep {
 }
 
 export default function DeliveryTimelineBox() {
-  const order = mockOrders[0];
-  const storeName = order.storeName.split(' \u2014 ')[0];
+  const { orders } = useData();
 
-  const steps: TimelineStep[] = [
-    { label: 'Ordered', detail: '10:30 AM', status: 'completed' },
-    { label: 'Packing', detail: '12 items', status: 'completed' },
-    { label: 'On the way', detail: '\uD83D\uDEF5 15 min left', status: 'current' },
-    { label: 'Delivered', detail: '', status: 'future' },
-  ];
+  // Use live orders if available, otherwise fall back to mock
+  const displayOrders = orders.length > 0 ? orders : mockOrders;
+  const order = displayOrders[0];
+  const storeName = (order.storeName || order.store_name || 'Order').split(' \u2014 ')[0];
+
+  // Build timeline steps based on order status
+  const buildSteps = (): TimelineStep[] => {
+    const status = order.status;
+    if (status === 'delivered') {
+      return [
+        { label: 'Ordered', detail: '', status: 'completed' },
+        { label: 'Packing', detail: '', status: 'completed' },
+        { label: 'On the way', detail: '', status: 'completed' },
+        { label: 'Delivered', detail: '', status: 'completed' },
+      ];
+    }
+    if (status === 'delivering') {
+      return [
+        { label: 'Ordered', detail: '10:30 AM', status: 'completed' },
+        { label: 'Packing', detail: `${order.items?.length || 0} items`, status: 'completed' },
+        { label: 'On the way', detail: '~15 min left', status: 'current' },
+        { label: 'Delivered', detail: '', status: 'future' },
+      ];
+    }
+    // Default / pending
+    return [
+      { label: 'Ordered', detail: '', status: 'current' },
+      { label: 'Packing', detail: '', status: 'future' },
+      { label: 'On the way', detail: '', status: 'future' },
+      { label: 'Delivered', detail: '', status: 'future' },
+    ];
+  };
+
+  const steps = buildSteps();
 
   return (
     <div
@@ -48,11 +76,14 @@ export default function DeliveryTimelineBox() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 16,
             flexShrink: 0,
           }}
         >
-          {order.emoji}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
         </div>
         <span
           style={{
@@ -103,15 +134,13 @@ export default function DeliveryTimelineBox() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#fff',
-                      fontSize: 9,
-                      fontWeight: 700,
-                      lineHeight: 1,
                       position: 'relative',
                       zIndex: 1,
                     }}
                   >
-                    &#10003;
+                    <svg width="9" height="7" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </div>
                 )}
                 {step.status === 'current' && (
@@ -193,18 +222,20 @@ export default function DeliveryTimelineBox() {
       </div>
 
       {/* Bottom ETA */}
-      <div style={{ marginTop: 'auto', paddingTop: 8 }}>
-        <span
-          style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 700,
-            fontSize: 11,
-            color: 'var(--warning)',
-          }}
-        >
-          ETA: ~15 min
-        </span>
-      </div>
+      {order.status === 'delivering' && (
+        <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+          <span
+            style={{
+              fontFamily: "'Nunito', sans-serif",
+              fontWeight: 700,
+              fontSize: 11,
+              color: 'var(--warning)',
+            }}
+          >
+            ETA: ~15 min
+          </span>
+        </div>
+      )}
     </div>
   );
 }

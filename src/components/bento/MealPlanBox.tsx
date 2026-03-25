@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { mockMealPlan } from '../../data/mock';
+import { useData } from '../../context/DataContext';
+import type { MealPlanDay } from '../../types';
 
 export default function MealPlanBox() {
   const [skippedDays, setSkippedDays] = useState<Set<number>>(new Set());
+  const { mealPlan } = useData();
 
   const toggleDay = (index: number) => {
     setSkippedDays((prev) => {
@@ -15,6 +18,31 @@ export default function MealPlanBox() {
       return next;
     });
   };
+
+  // Convert live meal plan data to display format, or use mock
+  let displayPlan: MealPlanDay[] = mockMealPlan;
+
+  if (mealPlan && mealPlan.days && Array.isArray(mealPlan.days)) {
+    displayPlan = mealPlan.days.map((day: any) => ({
+      day: day.day || day.name || '',
+      dayShort: (day.day || day.name || '').substring(0, 3).toUpperCase(),
+      recipe: day.recipe
+        ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' }
+        : null,
+      cooked: day.cooked || false,
+      isToday: day.isToday || false,
+    }));
+  } else if (mealPlan && Array.isArray(mealPlan)) {
+    displayPlan = mealPlan.map((day: any) => ({
+      day: day.day || day.name || '',
+      dayShort: (day.day || day.name || '').substring(0, 3).toUpperCase(),
+      recipe: day.recipe
+        ? { title: day.recipe.title || day.recipe.name || '', emoji: day.recipe.emoji || '' }
+        : null,
+      cooked: day.cooked || false,
+      isToday: day.isToday || false,
+    }));
+  }
 
   return (
     <div
@@ -62,7 +90,7 @@ export default function MealPlanBox() {
 
       {/* Days grid */}
       <div style={{ flex: 1, display: 'flex', gap: 4 }}>
-        {mockMealPlan.map((day, index) => {
+        {displayPlan.map((day, index) => {
           const isSkipped = skippedDays.has(index);
 
           return (
@@ -102,7 +130,7 @@ export default function MealPlanBox() {
                 {day.dayShort}
               </span>
 
-              {/* Emoji container */}
+              {/* Icon container */}
               <div
                 style={{
                   width: 32,
@@ -119,7 +147,12 @@ export default function MealPlanBox() {
                 }}
               >
                 {day.recipe ? (
-                  <span>{day.recipe.emoji}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 11h.01" />
+                    <path d="M11 15h.01" />
+                    <path d="M16 16h.01" />
+                    <path d="m2 16 20 6-6-20A20 20 0 0 0 2 16" />
+                  </svg>
                 ) : (
                   <span style={{ color: 'var(--foreground-muted)' }}>&mdash;</span>
                 )}
@@ -138,13 +171,11 @@ export default function MealPlanBox() {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#fff',
-                      fontSize: 8,
-                      fontWeight: 700,
-                      lineHeight: 1,
                     }}
                   >
-                    &#10003;
+                    <svg width="8" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </div>
                 )}
               </div>

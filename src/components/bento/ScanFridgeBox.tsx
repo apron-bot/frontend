@@ -1,7 +1,16 @@
 import ramenImg from '../../assets/ramen.png';
 import { mockFridgeChanges } from '../../data/mock';
+import { useData } from '../../context/DataContext';
 
 export default function ScanFridgeBox() {
+  const { inventory, fridgeChanges } = useData();
+
+  // Use live fridge changes from SSE if available, otherwise fall back to mock
+  const hasLiveChanges = fridgeChanges.length > 0;
+  const displayChanges = hasLiveChanges
+    ? fridgeChanges.map((c) => ({ delta: c.delta, name: c.name }))
+    : mockFridgeChanges;
+
   return (
     <div
       style={{
@@ -16,7 +25,7 @@ export default function ScanFridgeBox() {
       }}
     >
       <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-        {/* Left column — fridge scan image */}
+        {/* Left column -- fridge scan image */}
         <div
           style={{
             flex: '0 0 40%',
@@ -55,13 +64,34 @@ export default function ScanFridgeBox() {
               lineHeight: 1,
             }}
           >
-            <span role="img" aria-label="camera">
-              {'📷'}
-            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
           </div>
+
+          {/* Live inventory count badge */}
+          {inventory.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 6,
+                left: 6,
+                background: 'var(--accent)',
+                color: '#fff',
+                borderRadius: 9999,
+                padding: '2px 6px',
+                fontSize: 9,
+                fontWeight: 700,
+                fontFamily: "'Nunito', sans-serif",
+              }}
+            >
+              {inventory.length} items
+            </div>
+          )}
         </div>
 
-        {/* Right column — scan results scoreboard */}
+        {/* Right column -- scan results scoreboard */}
         <div
           style={{
             flex: 1,
@@ -78,14 +108,28 @@ export default function ScanFridgeBox() {
               letterSpacing: '0.5px',
               color: 'var(--accent)',
               marginBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}
           >
             SCAN RESULTS
+            {hasLiveChanges && (
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: 'var(--success)',
+                  display: 'inline-block',
+                }}
+              />
+            )}
           </span>
 
           {/* Changes list */}
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            {mockFridgeChanges.map((item, i) => (
+            {displayChanges.map((item, i) => (
               <div
                 key={i}
                 style={{
@@ -106,7 +150,16 @@ export default function ScanFridgeBox() {
                 >
                   {item.delta > 0 ? `+${item.delta}` : item.delta}
                 </span>
-                <span style={{ fontSize: 14 }}>{item.emoji}</span>
+                {/* SVG food icon instead of emoji */}
+                <span style={{ display: 'flex', alignItems: 'center' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--foreground-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                    <line x1="6" y1="1" x2="6" y2="4" />
+                    <line x1="10" y1="1" x2="10" y2="4" />
+                    <line x1="14" y1="1" x2="14" y2="4" />
+                  </svg>
+                </span>
                 <span
                   className="font-body font-normal"
                   style={{ fontSize: 12, color: 'var(--foreground)' }}
